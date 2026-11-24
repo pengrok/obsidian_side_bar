@@ -11,6 +11,7 @@ import { ALL_PATHS, AnnotationIndex } from "./store/annotationIndex";
 import { AnnotationStore } from "./store/annotationStore";
 import type { MarginNotesSettings, UiState } from "./types";
 import { MarginNotesView, VIEW_TYPE_MARGIN_NOTES } from "./ui/sidebarView";
+import { SelectionToolbar, type ToolbarContext } from "./ui/selectionToolbar";
 import { debounceFn, throttleFn } from "./utils/debounce";
 
 const HOVER_SOURCE = "margin-notes";
@@ -31,6 +32,7 @@ export default class MarginNotesPlugin extends Plugin {
 
 	private lastMdLeaf: WorkspaceLeaf | null = null;
 	private colorVars: string[] = [];
+	private toolbar: SelectionToolbar | null = null;
 	private scrollHooked = new WeakSet<HTMLElement>();
 	readonly saveUiSoon = debounceFn(() => void this.saveAll(), 500);
 
@@ -68,11 +70,13 @@ export default class MarginNotesPlugin extends Plugin {
 			}),
 		);
 		this.registerDomEvent(activeDocument, "mouseover", (e) => this.onHover(e));
-		// 팝아웃 창에도 색 변수·마우스 올림 처리를 건다
+		this.setupSelectionToolbar(activeDocument);
+		// 팝아웃 창에도 색 변수·마우스 올림·선택 버튼을 건다
 		this.registerEvent(
 			this.app.workspace.on("window-open", (_win, win) => {
 				this.applyColorVars(win.document.body);
 				this.registerDomEvent(win.document, "mouseover", (e) => this.onHover(e));
+				this.setupSelectionToolbar(win.document);
 			}),
 		);
 
@@ -98,6 +102,7 @@ export default class MarginNotesPlugin extends Plugin {
 
 	onunload(): void {
 		this.index?.destroy();
+		this.toolbar?.destroy();
 		this.saveUiSoon.cancel();
 		this.clearColorVars(activeDocument.body);
 	}
@@ -142,6 +147,7 @@ export default class MarginNotesPlugin extends Plugin {
 	}
 
 	onColorsChanged(): void {
+		this.toolbar?.reset();
 		this.applyColorStyles();
 		this.refreshEditors(true);
 		this.refreshView(true);
@@ -244,6 +250,62 @@ export default class MarginNotesPlugin extends Plugin {
 		await this.index.build();
 		this.refreshView(true);
 		this.refreshEditors(true);
+	}
+
+	// ── 선택하면 뜨는 버튼 줄 ────────────────────────────
+
+	private setupSelectionToolbar(doc: Document): void {
+		if (!this.toolbar) {
+			this.toolbar = new SelectionToolbar({
+				getContext: () => this.selectionContext(),
+				isCommentFile: (p) => this.index.isCommentFile(p),
+				enabled: () => this.settings.showSelectionToolbar,
+				colors: () => this.settings.colors,
+				defaultColor: () => this.settings.defaultColor,
+				onComment: (editor, file) => void this.actions.addComment(editor, file),
+				onHighlight: (editor, file, key) => void this.actions.addHighlight(editor, file, key),
+				doc: () => activeDocument,
+			});
+		}
+		const tb = this.toolbar;
+		const inEditor = (e: Event) => !!(e.target as HTMLElement | null)?.closest?.(".markdown-source-view .cm-content");
+		// 드래그를 끝내면(마우스를 떼면) 보여 준다. 선택이 확정된 다음에 보려고 한 박자 늦춘다
+		this.registerDomEvent(doc, "mouseup", (e) => {
+			if (tb.el?.contains(e.target as Node)) return;
+			if (inEditor(e)) window.setTimeout(() => tb.update(), 10);
+			else tb.hide();
+		});
+		this.registerDomEvent(doc, "mousedown", (e) => {
+			if (!tb.el?.contains(e.target as Node)) tb.hide();
+		});
+		// 키보드로 선택(Shift+방향키 등)하면 보여 주고, 그 밖의 입력은 숨긴다
+		this.registerDomEvent(doc, "keyup", (e) => {
+			if (!tb.visible && !e.shiftKey) return;
+			if (e.shiftKey && /^(Arrow|Home|End|Page)/.test(e.key) && inEditor(e)) tb.update();
+		});
+		this.registerDomEvent(doc, "keydown", (e) => {
+			if (["Shift", "Control", "Meta", "Alt"].includes(e.key)) return;
+			tb.hide();
+		});
+		this.registerDomEvent(doc, "scroll", () => tb.hide(), { capture: true });
+		this.registerEvent(this.app.workspace.on("active-leaf-change", () => tb.hide()));
+	}
+
+	private selectionContext(): ToolbarContext | null {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view || !view.file || view.getMode() !== "source") return null;
+		const cm = cmOf(view);
+		if (!cm) return null;
+		const sel = cm.state.selection.main;
+		if (sel.empty) return null;
+		const a = cm.coordsAtPos(sel.from);
+		const b = cm.coordsAtPos(sel.to);
+		if (!a || !b) return null;
+		return {
+			editor: view.editor,
+			file: view.file,
+			coords: { left: Math.min(a.left, b.left), right: Math.max(a.right, b.right), top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) },
+		};
 	}
 
 	// ── 3단계: 마우스 올리면 코멘트 미리보기 ──────────────

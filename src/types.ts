@@ -68,6 +68,7 @@ export interface MarginNotesSettings {
 	excludeFolders: string[]; // 기본 []
 	previewLines: number; // 기본 3
 	followEditorScroll: boolean; // 기본 false
+	showSelectionToolbar: boolean; // 글을 선택하면 버튼 줄 표시, 기본 true
 }
 
 export type TabId = "current" | "all";

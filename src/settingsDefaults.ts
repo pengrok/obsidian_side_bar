@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: MarginNotesSettings = {
 	excludeFolders: [],
 	previewLines: 3,
 	followEditorScroll: false,
+	showSelectionToolbar: true,
 };
 
 export function defaultTabState(tab: "current" | "all"): TabState {

@@ -560,3 +560,71 @@ body {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
 }
+
+/* ── 선택하면 뜨는 버튼 줄 ─────────────────────── */
+
+.mn-selection-toolbar {
+	position: fixed;
+	z-index: var(--layer-popover);
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	box-shadow: var(--shadow-s);
+	animation: mn-tb-in 0.08s ease-out;
+}
+.mn-selection-toolbar.is-hidden {
+	display: none;
+}
+.mn-tb-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 8px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-normal);
+}
+.mn-tb-btn svg {
+	width: 14px;
+	height: 14px;
+}
+.mn-tb-sep {
+	width: 1px;
+	align-self: stretch;
+	margin: 2px 3px;
+	background-color: var(--background-modifier-border);
+}
+.mn-tb-color {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	background: none;
+	box-shadow: none;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+}
+.mn-tb-color:hover {
+	background-color: var(--background-modifier-hover);
+}
+.mn-tb-color .mn-color-dot {
+	width: 12px;
+	height: 12px;
+}
+@keyframes mn-tb-in {
+	from {
+		opacity: 0;
+		transform: translateY(2px);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.mn-selection-toolbar {
+		animation: none;
+	}
+}

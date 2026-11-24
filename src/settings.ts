@@ -110,6 +110,15 @@ export class MarginNotesSettingTab extends PluginSettingTab {
 
 		// ── 동작 ──
 		new Setting(containerEl).setName("동작").setHeading();
+		new Setting(containerEl)
+			.setName("선택하면 버튼 표시")
+			.setDesc("글을 드래그하면 선택 위에 코멘트·하이라이트 버튼이 떠요.")
+			.addToggle((t) =>
+				t.setValue(s.showSelectionToolbar).onChange(async (v) => {
+					s.showSelectionToolbar = v;
+					await this.plugin.saveAll();
+				}),
+			);
 		new Setting(containerEl).setName("만든 뒤 파일 열기").setDesc("코멘트를 만들면 코멘트 파일을 새 탭으로 열어요.").addToggle((t) =>
 			t.setValue(s.openFileAfterCreate).onChange(async (v) => {
 				s.openFileAfterCreate = v;
