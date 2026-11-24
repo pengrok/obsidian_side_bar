@@ -32,6 +32,7 @@ export const DEFAULT_SETTINGS: MarginNotesSettings = {
 	previewLines: 3,
 	followEditorScroll: false,
 	showSelectionToolbar: true,
+	goalFolders: { day: "Goals/일", week: "Goals/주", month: "Goals/월", year: "Goals/년" },
 };
 
 export function defaultTabState(tab: "current" | "all"): TabState {
@@ -48,6 +49,7 @@ export function defaultTabState(tab: "current" | "all"): TabState {
 
 export const DEFAULT_UI_STATE: UiState = {
 	activeTab: "current",
+	goalsTab: "day",
 	tabs: { current: defaultTabState("current"), all: defaultTabState("all") },
 };
 
@@ -64,10 +66,12 @@ export function mergeData(loaded: unknown): PluginData {
 	if (!settings.colors.some((c) => c.key === settings.defaultColor)) settings.defaultColor = settings.colors[0].key;
 	if (!Array.isArray(settings.excludeFolders)) settings.excludeFolders = [];
 	settings.previewLines = Math.min(10, Math.max(1, Number(settings.previewLines) || 3));
+	settings.goalFolders = Object.assign({}, DEFAULT_SETTINGS.goalFolders, (raw.settings as Partial<MarginNotesSettings> | undefined)?.goalFolders ?? {});
 
 	const ui = raw.uiState as Partial<UiState> | undefined;
 	const uiState: UiState = {
 		activeTab: ui?.activeTab === "all" ? "all" : "current",
+		goalsTab: ui?.goalsTab && ["day", "week", "month", "year", "stats"].includes(ui.goalsTab) ? ui.goalsTab : "day",
 		tabs: {
 			current: Object.assign(defaultTabState("current"), ui?.tabs?.current ?? {}),
 			all: Object.assign(defaultTabState("all"), ui?.tabs?.all ?? {}),

@@ -69,6 +69,8 @@ export interface MarginNotesSettings {
 	previewLines: number; // 기본 3
 	followEditorScroll: boolean; // 기본 false
 	showSelectionToolbar: boolean; // 글을 선택하면 버튼 줄 표시, 기본 true
+	/** 목표 사이드바: 일·주·월·년 노트를 둘 폴더 (사용자가 고름) */
+	goalFolders: { day: string; week: string; month: string; year: string };
 }
 
 export type TabId = "current" | "all";
@@ -85,8 +87,12 @@ export interface TabState {
 	searchVisible: boolean;
 }
 
+export type GoalsTab = "day" | "week" | "month" | "year" | "stats";
+
 export interface UiState {
 	activeTab: TabId;
+	/** 목표 사이드바에서 마지막으로 본 탭 */
+	goalsTab: GoalsTab;
 	tabs: Record<TabId, TabState>;
 }
 

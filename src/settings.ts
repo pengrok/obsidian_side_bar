@@ -2,10 +2,10 @@ import { AbstractInputSuggest, App, normalizePath, Notice, PluginSettingTab, Set
 import type MarginNotesPlugin from "./main";
 import { MAX_COLORS, nextColorKey } from "./settingsDefaults";
 import { normalizeFolder, patternHasId, renderPattern, validateCommentFolder } from "./store/fileNaming";
+import { DEFAULT_SETTINGS } from "./settingsDefaults";
 import { formatDate, formatTime } from "./utils/time";
 import { confirmDialog } from "./ui/confirmModal";
 
-export { DEFAULT_SETTINGS } from "./settingsDefaults";
 
 class FolderSuggest extends AbstractInputSuggest<TFolder> {
 	constructor(
@@ -107,6 +107,31 @@ export class MarginNotesSettingTab extends PluginSettingTab {
 					this.plugin.onColorsChanged();
 				});
 			});
+
+		// ── 목표 (GOALS) ──
+		new Setting(containerEl).setName("목표 (GOALS)").setHeading();
+		containerEl.createDiv({
+			cls: "setting-item-description",
+			text: "일·주·월·년 할 일 노트를 둘 폴더. 파일 이름은 2026-11-24 / 2026-W48 / 2026-11 / 2026 형식이고, 한 주는 월요일에 시작해요.",
+		});
+		const goalLabels: Record<keyof typeof s.goalFolders, string> = { day: "일 노트 폴더", week: "주 노트 폴더", month: "월 노트 폴더", year: "년 노트 폴더" };
+		for (const key of ["day", "week", "month", "year"] as const) {
+			const setting = new Setting(containerEl).setName(goalLabels[key]);
+			const err = containerEl.createDiv({ cls: "mn-setting-error" });
+			setting.addText((t) => {
+				t.setPlaceholder(DEFAULT_SETTINGS.goalFolders[key]).setValue(s.goalFolders[key]);
+				const apply = (value: string) => {
+					const msg = validateGoalFolder(value, this.app.vault.configDir);
+					err.setText(msg ?? "");
+					t.inputEl.toggleClass("mn-invalid", !!msg);
+					if (msg) return;
+					s.goalFolders[key] = normalizeFolder(value);
+					void this.plugin.saveAll().then(() => this.plugin.refreshGoals());
+				};
+				new FolderSuggest(this.app, t.inputEl, apply);
+				t.inputEl.addEventListener("change", () => apply(t.inputEl.value));
+			});
+		}
 
 		// ── 동작 ──
 		new Setting(containerEl).setName("동작").setHeading();
@@ -295,4 +320,13 @@ export class MarginNotesSettingTab extends PluginSettingTab {
 		}
 		await this.plugin.rebuildIndex();
 	}
+}
+
+/** 목표 노트 폴더 검증 */
+export function validateGoalFolder(p: string, configDir: string): string | null {
+	const n = normalizeFolder(p);
+	if (!n) return "폴더를 입력하세요.";
+	if (n === configDir || n.startsWith(configDir + "/")) return `${configDir} 폴더 안에는 둘 수 없어요.`;
+	if (n.split("/").some((seg) => seg === "." || seg === "..")) return "'.'나 '..'는 쓸 수 없어요.";
+	return null;
 }

@@ -666,3 +666,228 @@ body.mn-hide-highlights .markdown-rendered mark.mn-hl {
 	background-color: transparent !important;
 	color: inherit;
 }
+
+/* ── 목표 사이드바 (GOALS) ───────────────────── */
+
+.mn-goals {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px 10px 0;
+	overflow: hidden;
+}
+.mn-goals-body {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-bottom: 12px;
+}
+.mn-goals-body > * {
+	flex-shrink: 0;
+}
+
+.mn-goal-nav {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.mn-goal-label {
+	flex: 1 1 auto;
+	text-align: center;
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	cursor: pointer;
+	color: var(--text-muted);
+}
+.mn-goal-label.is-current {
+	color: var(--text-normal);
+	cursor: default;
+}
+.mn-goal-path {
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	word-break: break-all;
+}
+
+.mn-goal-progress {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.mn-goal-track {
+	height: 6px;
+	border-radius: 3px;
+	background-color: var(--background-modifier-border);
+	overflow: hidden;
+}
+.mn-goal-fill {
+	height: 100%;
+	border-radius: 3px;
+	background-color: var(--interactive-accent);
+}
+.mn-goal-count {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.mn-goal-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.mn-goal-task {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	padding: 3px 4px 3px calc(4px + var(--mn-goal-depth, 0) * 18px);
+	border-radius: var(--radius-s);
+}
+.mn-goal-task:hover {
+	background-color: var(--background-modifier-hover);
+}
+.mn-goal-task input[type="checkbox"] {
+	margin-top: 3px;
+	flex: 0 0 auto;
+}
+.mn-goal-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: var(--font-ui-small);
+	line-height: 1.5;
+	cursor: pointer;
+	overflow-wrap: anywhere;
+}
+.mn-goal-text .mn-inline-p {
+	margin: 0;
+}
+.mn-goal-task.is-done .mn-goal-text {
+	color: var(--text-faint);
+	text-decoration: line-through;
+}
+.mn-goal-open {
+	font-size: var(--font-ui-smaller);
+}
+
+.mn-goal-add {
+	display: flex;
+	gap: 6px;
+}
+.mn-goal-add input {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* 통계 */
+.mn-stat-section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.mn-stat-title {
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+	color: var(--text-normal);
+}
+.mn-stat-row {
+	display: grid;
+	grid-template-columns: 4em 1fr auto;
+	align-items: center;
+	gap: 8px;
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+	padding: 2px 0;
+}
+.mn-stat-label,
+.mn-stat-value {
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+.mn-stat-tiles {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 6px;
+}
+.mn-stat-tile {
+	padding: 8px;
+	border-radius: var(--radius-m);
+	background-color: var(--background-secondary);
+	text-align: center;
+}
+.mn-stat-tile-value {
+	font-size: var(--font-ui-large);
+	font-weight: var(--font-semibold);
+	color: var(--text-normal);
+}
+.mn-stat-tile-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.mn-chart {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.mn-chart-plot {
+	position: relative;
+	height: 90px;
+	display: flex;
+	align-items: flex-end;
+	gap: 2px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.mn-chart-grid {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 1px dashed var(--background-modifier-border);
+	pointer-events: none;
+}
+.mn-chart-col {
+	position: relative;
+	flex: 1 1 0;
+	height: 100%;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	cursor: pointer;
+}
+.mn-chart-col:hover {
+	background-color: var(--background-modifier-hover);
+}
+.mn-chart-bar {
+	width: 100%;
+	max-width: 18px;
+	border-radius: 4px 4px 0 0;
+	background-color: var(--interactive-accent);
+}
+.mn-chart-col.is-empty::after {
+	content: "";
+	width: 4px;
+	height: 4px;
+	margin-bottom: 2px;
+	border-radius: 50%;
+	background-color: var(--text-faint);
+}
+.mn-chart-col.is-current .mn-chart-bar {
+	box-shadow: 0 0 0 1px var(--background-primary), 0 0 0 2px var(--interactive-accent);
+}
+.mn-chart-axis {
+	display: flex;
+	gap: 2px;
+}
+.mn-chart-tick {
+	flex: 1 1 0;
+	text-align: center;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+	white-space: nowrap;
+	overflow: visible;
+}
+.mn-chart-note {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}

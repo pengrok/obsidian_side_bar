@@ -11,6 +11,8 @@ import { ALL_PATHS, AnnotationIndex } from "./store/annotationIndex";
 import { AnnotationStore } from "./store/annotationStore";
 import type { MarginNotesSettings, UiState } from "./types";
 import { MarginNotesView, VIEW_TYPE_MARGIN_NOTES } from "./ui/sidebarView";
+import { GoalsStore } from "./goals/goalsStore";
+import { GoalsView, VIEW_TYPE_GOALS } from "./goals/goalsView";
 import { KeySelectionTracker, SelectionToolbar, type ToolbarContext } from "./ui/selectionToolbar";
 import { pickColor } from "./ui/colorPicker";
 import { applyHighlightVisibility } from "./utils/visibility";
@@ -30,6 +32,7 @@ export default class MarginNotesPlugin extends Plugin {
 	index!: AnnotationIndex;
 	writer!: NoteWriter;
 	actions!: Actions;
+	goals!: GoalsStore;
 	/** 다시 연결 대기 중인 고아 코멘트 id (6.8절) */
 	relinkingId: string | null = null;
 
@@ -55,9 +58,19 @@ export default class MarginNotesPlugin extends Plugin {
 		});
 		this.writer = new NoteWriter(this.app);
 		this.actions = new Actions(this);
+		this.goals = new GoalsStore({
+			app: this.app,
+			folders: () => this.settings.goalFolders,
+			writer: this.writer,
+			store: this.store,
+			getLiveText: (p) => this.liveText(p),
+		});
 
 		this.registerView(VIEW_TYPE_MARGIN_NOTES, (leaf) => new MarginNotesView(leaf, this));
 		this.addRibbonIcon("highlighter", "하이라이트 사이드바 열기", () => void this.activateView(true));
+		this.registerView(VIEW_TYPE_GOALS, (leaf) => new GoalsView(leaf, this));
+		this.addRibbonIcon("target", "목표 사이드바 열기", () => void this.activateGoalsView());
+		this.addCommand({ id: "open-goals", name: "목표 사이드바 열기", icon: "target", callback: () => void this.activateGoalsView() });
 		registerCommands(this);
 		this.registerEvent(this.app.workspace.on("editor-menu", (menu, editor, info) => editorMenu(this, menu, editor, info)));
 		this.addSettingTab(new MarginNotesSettingTab(this.app, this));
@@ -229,6 +242,17 @@ export default class MarginNotesPlugin extends Plugin {
 		return leaf.view instanceof MarginNotesView ? leaf.view : null;
 	}
 
+	async activateGoalsView(): Promise<void> {
+		const ws = this.app.workspace;
+		let leaf: WorkspaceLeaf | null = ws.getLeavesOfType(VIEW_TYPE_GOALS)[0] ?? null;
+		if (!leaf) {
+			leaf = ws.getRightLeaf(false);
+			if (!leaf) return;
+			await leaf.setViewState({ type: VIEW_TYPE_GOALS, active: true });
+		}
+		await ws.revealLeaf(leaf);
+	}
+
 	/** 카드로 스크롤 + 강조. open이면 사이드바가 닫혀 있을 때 연다 */
 	revealInSidebar(id: string, open: boolean): void {
 		const existing = this.getView();
@@ -248,6 +272,12 @@ export default class MarginNotesPlugin extends Plugin {
 			this.index.highlightsByFile.clear();
 			v.invalidateAll();
 		} else v.refresh();
+	}
+
+	refreshGoals(): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_GOALS)) {
+			if (leaf.view instanceof GoalsView) leaf.view.refresh();
+		}
 	}
 
 	async rebuildIndex(): Promise<void> {
