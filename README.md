@@ -111,7 +111,7 @@ npm run lint
 npm run build
 ```
 
-- `npm test`: vitest 189개. 파서·파일 이름·검색(10.2절 T1~T8), 가짜 보관함을 쓴 저장소·인덱스·노트 쓰기·사용자 흐름(6장, 8장 E1~E18), jsdom 위의 사이드바·라이브 프리뷰(실제 CodeMirror)·읽기 모드 화면 테스트입니다.
+- `npm test`: vitest 201개. 파서·파일 이름·검색(10.2절 T1~T8), 가짜 보관함을 쓴 저장소·인덱스·노트 쓰기·사용자 흐름(6장, 8장 E1~E18), jsdom 위의 사이드바·라이브 프리뷰(실제 CodeMirror)·읽기 모드 화면 테스트입니다.
 - `npm run lint`: `eslint-plugin-obsidianmd` 권장 규칙(커뮤니티 심사 규칙)입니다.
 - 수동 테스트용 보관함: `node scripts/make-test-vault.mjs <경로> 500 4`로 노트 500개·하이라이트 2,000개와 10.1절 샘플 노트를 만듭니다.
 

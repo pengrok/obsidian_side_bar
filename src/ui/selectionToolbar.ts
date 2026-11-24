@@ -180,3 +180,31 @@ export class SelectionToolbar {
 		this.reset();
 	}
 }
+
+const NAV_KEY_RE = /^(Arrow|Home|End|Page)/;
+const MODIFIERS = ["Shift", "Control", "Meta", "Alt"];
+
+/**
+ * 키보드로 선택을 끝냈는지 판단한다.
+ * macOS는 Command를 누르고 있으면 방향키의 keyup을 보내지 않는다(Cmd+Shift+→).
+ * 그래서 방향키 keyup뿐 아니라, 마지막 키가 Shift+이동키였다면 Shift·Command를 뗄 때도 선택이 끝난 것으로 본다.
+ */
+export class KeySelectionTracker {
+	private lastWasShiftNav = false;
+
+	/** keydown마다 부른다 */
+	onKeyDown(e: Pick<KeyboardEvent, "key" | "shiftKey">): void {
+		if (MODIFIERS.includes(e.key)) return;
+		this.lastWasShiftNav = e.shiftKey && NAV_KEY_RE.test(e.key);
+	}
+
+	/** keyup마다 부른다. true면 버튼 줄을 다시 확인할 때 */
+	onKeyUp(e: Pick<KeyboardEvent, "key" | "shiftKey">): boolean {
+		if (NAV_KEY_RE.test(e.key)) return e.shiftKey;
+		if ((e.key === "Shift" || e.key === "Meta") && this.lastWasShiftNav) {
+			this.lastWasShiftNav = false;
+			return true;
+		}
+		return false;
+	}
+}

@@ -193,13 +193,28 @@ describe("8장 예외·엣지 케이스", () => {
 		const cf = app.vault.getAbstractFileByPath("Annotations/논문정리/a.md") as TFile;
 		await index.ensureBody(index.get("aaaaaa")!);
 		changes.length = 0;
-		await app.vault.modify(cf, commentFile({ id: "aaaaaa", source: NOTE, quote: "첫 문장", body: "직접 고침", color: "red" }).replace("11:12:30", "12:00:00"));
+		// 사용자가 직접 고칠 때는 mn-updated가 그대로다
+		await app.vault.modify(cf, commentFile({ id: "aaaaaa", source: NOTE, quote: "첫 문장", body: "직접 고침", color: "red" }));
 		await settle();
 		const ann = index.get("aaaaaa")!;
 		expect(ann.color).toBe("red");
 		expect(ann.body).toBeNull();
 		expect(await index.ensureBody(ann)).toBe("직접 고침");
 		expect(changes.some((c) => c.has(NOTE))).toBe(true);
+	});
+});
+
+describe("코멘트 파일 본문만 직접 고침", () => {
+	it("본문 캐시를 비우고 새 본문을 읽는다 (mn-updated가 그대로여도)", async () => {
+		const { app, index } = await env();
+		const cf = app.vault.getAbstractFileByPath("Annotations/논문정리/a.md") as TFile;
+		expect(await index.ensureBody(index.get("aaaaaa")!)).toBe("첫 코멘트");
+		await app.vault.modify(cf, app.vault.text(cf.path).replace("첫 코멘트", "두 번째 고침"));
+		await settle();
+		expect(await index.ensureBody(index.get("aaaaaa")!)).toBe("두 번째 고침");
+		await app.vault.modify(cf, app.vault.text(cf.path).replace("두 번째 고침", "세 번째 고침"));
+		await settle();
+		expect(await index.ensureBody(index.get("aaaaaa")!)).toBe("세 번째 고침");
 	});
 });
 

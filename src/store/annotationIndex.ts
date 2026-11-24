@@ -123,7 +123,6 @@ export class AnnotationIndex extends Events {
 			return null;
 		}
 		if (fm[PROP.detached] === true || fm[PROP.detached] === "true") return null;
-		const old = this.byId.get(id);
 		return {
 			id,
 			file,
@@ -133,8 +132,9 @@ export class AnnotationIndex extends Events {
 			created: propString(fm[PROP.created]),
 			updated: propString(fm[PROP.updated]),
 			tags: normalizeTags(fm[PROP.tags]),
-			// 같은 파일이고 내용이 바뀌지 않았으면 본문 캐시를 이어 쓴다
-			body: old && old.file === file && old.updated === propString(fm[PROP.updated]) ? old.body : null,
+			// 파일이 바뀔 때마다 본문 캐시는 비운다(5.5절). 사용자가 본문만 고치면
+			// mn-updated는 그대로이므로 그 값으로 "안 바뀜"을 판단하면 안 된다
+			body: null,
 		};
 	}
 

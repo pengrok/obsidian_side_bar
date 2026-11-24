@@ -227,10 +227,71 @@ describe("사이드바 — 현재 노트 탭 (7장, M7·M8)", () => {
 		expect(t.app.vault.text(NOTE)).toBe(TEXT); // 취소하면 노트 그대로
 	});
 
+	it("1초 자동 저장 뒤에도 입력창이 닫히지 않고 포커스·커서가 그대로", async () => {
+		const t = await makeEnv();
+		(cards(t.root)[0].querySelector(".mn-card-comment") as HTMLElement).click();
+		await wait(10);
+		const ta = t.root.querySelector<HTMLTextAreaElement>(".mn-card-input")!;
+		expect(activeDocument.activeElement).toBe(ta);
+		ta.value = "RNN을 빼고도 계속 쓰는 중";
+		ta.setSelectionRange(5, 5);
+		ta.dispatchEvent(new Event("input"));
+		await wait(1600); // 자동 저장(1초) → 파일 변경 → 인덱스 알림 → 다시 그리기까지
+		expect(await t.store.readBody(t.index.get("aaaaaa")!.file)).toBe("RNN을 빼고도 계속 쓰는 중");
+		expect(t.root.querySelector(".mn-card-input")).toBe(ta);
+		expect(ta.isConnected).toBe(true);
+		expect(activeDocument.activeElement).toBe(ta);
+		expect(ta.selectionStart).toBe(5);
+	});
+
+	it("편집 중에 목록을 다시 그려도 포커스·커서를 되돌린다", async () => {
+		const t = await makeEnv();
+		(cards(t.root)[1].querySelector(".mn-card-comment") as HTMLElement).click();
+		await wait(10);
+		const ta = t.root.querySelector<HTMLTextAreaElement>(".mn-card-input")!;
+		ta.value = "abcdef";
+		ta.setSelectionRange(2, 4);
+		ta.dispatchEvent(new Event("input"));
+		await t.view.render();
+		await wait(200); // blur 처리(0.15초)가 지나도
+		expect(t.root.querySelector(".mn-card-input")).toBe(ta);
+		expect(activeDocument.activeElement).toBe(ta);
+		expect([ta.selectionStart, ta.selectionEnd]).toEqual([2, 4]);
+	});
+
+	it("다른 곳의 변경 알림이 와도 편집 중에는 닫히지 않는다", async () => {
+		const t = await makeEnv();
+		(cards(t.root)[0].querySelector(".mn-card-comment") as HTMLElement).click();
+		await wait(10);
+		const ta = t.root.querySelector<HTMLTextAreaElement>(".mn-card-input")!;
+		ta.value = "쓰는 중";
+		ta.dispatchEvent(new Event("input"));
+		t.index.emitChanged([NOTE, "*"]);
+		await wait(400);
+		expect(t.root.querySelector(".mn-card-input")).toBe(ta);
+		expect(activeDocument.activeElement).toBe(ta);
+	});
+
+	it("입력창 밖을 누르면(포커스를 잃으면) 저장하고 닫는다", async () => {
+		const t = await makeEnv();
+		(cards(t.root)[0].querySelector(".mn-card-comment") as HTMLElement).click();
+		await wait(10);
+		const ta = t.root.querySelector<HTMLTextAreaElement>(".mn-card-input")!;
+		ta.value = "밖을 누름";
+		ta.dispatchEvent(new Event("input"));
+		const other = document.body.createEl("input");
+		other.focus();
+		await wait(300);
+		expect(t.root.querySelector(".mn-card-input")).toBeNull();
+		expect(await t.store.readBody(t.index.get("aaaaaa")!.file)).toBe("밖을 누름");
+		other.remove();
+	});
+
 	it("코멘트 파일을 직접 고치면 1초 안에 카드에 반영 (M9)", async () => {
 		const t = await makeEnv();
 		const cf = t.app.vault.getAbstractFileByPath("Annotations/논문정리/a.md") as TFile;
-		await t.app.vault.modify(cf, commentFile({ id: "aaaaaa", source: NOTE, quote: "셀프 어텐션만으로", body: "밖에서 고침" }).replace("11:12:30", "13:00:00"));
+		// 사용자가 직접 고칠 때는 mn-updated가 그대로다
+		await t.app.vault.modify(cf, commentFile({ id: "aaaaaa", source: NOTE, quote: "셀프 어텐션만으로", body: "밖에서 고침" }));
 		await wait(600);
 		expect(cards(t.root)[0].querySelector(".mn-card-comment")!.textContent).toBe("밖에서 고침");
 	});

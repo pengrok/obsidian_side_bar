@@ -114,3 +114,60 @@ describe("SelectionToolbar", () => {
 		expect(tb.el!.querySelectorAll(".mn-tb-color")).toHaveLength(5);
 	});
 });
+
+import { KeySelectionTracker } from "../src/ui/selectionToolbar";
+
+describe("KeySelectionTracker (키보드로 선택을 끝냈는지)", () => {
+	const down = (k: KeySelectionTracker, key: string, shiftKey = false) => k.onKeyDown({ key, shiftKey });
+	const up = (k: KeySelectionTracker, key: string, shiftKey = false) => k.onKeyUp({ key, shiftKey });
+
+	it("Shift+→ 를 하나씩: 방향키를 뗄 때", () => {
+		const k = new KeySelectionTracker();
+		down(k, "Shift", true);
+		down(k, "ArrowRight", true);
+		expect(up(k, "ArrowRight", true)).toBe(true);
+	});
+	it("Option+Shift+→: 방향키 keyup이 온다", () => {
+		const k = new KeySelectionTracker();
+		down(k, "Alt", true);
+		down(k, "Shift", true);
+		down(k, "ArrowRight", true);
+		expect(up(k, "ArrowRight", true)).toBe(true);
+	});
+	it("Cmd+Shift+→ (macOS): 방향키 keyup이 없어도 Command·Shift를 뗄 때 한 번", () => {
+		const k = new KeySelectionTracker();
+		down(k, "Meta");
+		down(k, "Shift", true);
+		down(k, "ArrowRight", true);
+		// macOS는 Command가 눌린 동안 ArrowRight의 keyup을 보내지 않는다
+		expect(up(k, "Meta", true)).toBe(true);
+		expect(up(k, "Shift", false)).toBe(false); // 두 번 띄우지 않는다
+	});
+	it("Shift를 먼저 떼도 된다", () => {
+		const k = new KeySelectionTracker();
+		down(k, "Meta");
+		down(k, "Shift", true);
+		down(k, "ArrowLeft", true);
+		expect(up(k, "Shift", false)).toBe(true);
+		expect(up(k, "Meta", false)).toBe(false);
+	});
+	it("Cmd+C 같은 다른 단축키 뒤에는 띄우지 않는다", () => {
+		const k = new KeySelectionTracker();
+		down(k, "Meta");
+		down(k, "c");
+		expect(up(k, "Meta")).toBe(false);
+	});
+	it("Shift 없이 방향키는 띄우지 않는다", () => {
+		const k = new KeySelectionTracker();
+		down(k, "ArrowRight");
+		expect(up(k, "ArrowRight")).toBe(false);
+	});
+	it("Cmd+Shift+→ 뒤에 글자를 치면 그 다음 Command keyup에는 띄우지 않는다", () => {
+		const k = new KeySelectionTracker();
+		down(k, "Meta");
+		down(k, "Shift", true);
+		down(k, "ArrowRight", true);
+		down(k, "a");
+		expect(up(k, "Meta")).toBe(false);
+	});
+});

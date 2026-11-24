@@ -60,7 +60,15 @@ export class MarginNotesView extends ItemView {
 	private listEl!: HTMLElement;
 	private footerEl!: HTMLElement;
 
-	readonly refresh = debounceFn(() => void this.render(), 100);
+	/** 목록을 다시 그리는 중 (이때 생기는 포커스 변화로는 편집을 끝내지 않는다) */
+	private redrawing = false;
+
+	readonly refresh = debounceFn(() => {
+		// 편집 중에는 다시 그리지 않는다. 편집이 끝나면(endEditing) 한 번 다시 그린다.
+		// 자동 저장으로 생긴 변경은 다시 그릴 필요도 없다
+		if (this.editing) return;
+		void this.render();
+	}, 100);
 	private readonly autosave = debounceFn(() => void this.saveEditing(false), 1000);
 
 	constructor(
@@ -439,6 +447,16 @@ export class MarginNotesView extends ItemView {
 		const ts = this.ts;
 		// 편집 중인 카드는 새로 만들지 않고 그대로 옮겨 붙인다 (5.9절)
 		const keep = this.editing;
+		const focus = keep
+			? {
+					had: activeDocument.activeElement === keep.textarea,
+					start: keep.textarea.selectionStart,
+					end: keep.textarea.selectionEnd,
+					dir: keep.textarea.selectionDirection,
+					scroll: keep.textarea.scrollTop,
+				}
+			: null;
+		this.redrawing = true;
 		if (keep) keep.card.detach();
 
 		const comp = new Component();
@@ -491,6 +509,14 @@ export class MarginNotesView extends ItemView {
 				renderCard(host, container, item);
 			}
 		}
+		if (keep && keptPlaced && focus?.had) {
+			// 화면에서 떼었다 붙이면 포커스가 사라지므로 되돌린다
+			const ta = keep.textarea;
+			ta.focus({ preventScroll: true });
+			ta.setSelectionRange(focus.start, focus.end, focus.dir ?? undefined);
+			ta.scrollTop = focus.scroll;
+		}
+		this.redrawing = false;
 		if (keep && !keptPlaced) {
 			// 편집 중이던 항목이 목록에서 빠졌다(필터·삭제) — 저장하고 편집을 끝낸다
 			if (keep.dirty) void this.saveEditing(true);
@@ -580,8 +606,11 @@ export class MarginNotesView extends ItemView {
 				}
 			});
 			ta.addEventListener("blur", () => {
+				if (this.redrawing) return;
 				window.setTimeout(() => {
-					if (this.editing?.textarea === ta && activeDocument.activeElement !== ta) void this.finishEditing(true);
+					if (this.redrawing || this.editing?.textarea !== ta || !ta.isConnected) return;
+					if (activeDocument.activeElement === ta) return;
+					void this.finishEditing(true);
 				}, 150);
 			});
 			ta.focus();

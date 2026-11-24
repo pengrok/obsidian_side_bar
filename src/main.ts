@@ -11,7 +11,7 @@ import { ALL_PATHS, AnnotationIndex } from "./store/annotationIndex";
 import { AnnotationStore } from "./store/annotationStore";
 import type { MarginNotesSettings, UiState } from "./types";
 import { MarginNotesView, VIEW_TYPE_MARGIN_NOTES } from "./ui/sidebarView";
-import { SelectionToolbar, type ToolbarContext } from "./ui/selectionToolbar";
+import { KeySelectionTracker, SelectionToolbar, type ToolbarContext } from "./ui/selectionToolbar";
 import { pickColor } from "./ui/colorPicker";
 import { applyHighlightVisibility } from "./utils/visibility";
 import { debounceFn, throttleFn } from "./utils/debounce";
@@ -292,12 +292,13 @@ export default class MarginNotesPlugin extends Plugin {
 		this.registerDomEvent(doc, "mousedown", (e) => {
 			if (!tb.el?.contains(e.target as Node)) tb.hide();
 		});
-		// 키보드로 선택(Shift+방향키 등)하면 보여 주고, 그 밖의 입력은 숨긴다
+		// 키보드로 선택(Shift+방향키, Option+Shift, Cmd+Shift 등)하면 보여 주고, 그 밖의 입력은 숨긴다
+		const keys = new KeySelectionTracker();
 		this.registerDomEvent(doc, "keyup", (e) => {
-			if (!tb.visible && !e.shiftKey) return;
-			if (e.shiftKey && /^(Arrow|Home|End|Page)/.test(e.key) && inEditor(e)) tb.update();
+			if (keys.onKeyUp(e) && inEditor(e)) tb.update();
 		});
 		this.registerDomEvent(doc, "keydown", (e) => {
+			keys.onKeyDown(e);
 			if (["Shift", "Control", "Meta", "Alt"].includes(e.key)) return;
 			tb.hide();
 		});
