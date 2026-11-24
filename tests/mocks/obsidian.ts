@@ -4,12 +4,12 @@
  * 플러그인이 실제로 쓰는 API만 최소한으로 구현한다.
  */
 
-export type EventRef = { name: string; cb: (...args: unknown[]) => unknown };
+export type EventRef = { name: string; cb: (...args: unknown[]) => unknown; owner?: Events };
 
 export class Events {
 	private _handlers = new Map<string, Set<EventRef>>();
 	on(name: string, cb: (...args: any[]) => unknown): EventRef {
-		const ref = { name, cb };
+		const ref = { name, cb, owner: this };
 		if (!this._handlers.has(name)) this._handlers.set(name, new Set());
 		this._handlers.get(name)!.add(ref);
 		return ref;
@@ -464,28 +464,152 @@ export class App {
 	}
 }
 
-// ── UI 클래스 자리표시 (테스트에서 vi.mock으로 대체) ─────────────
+// ── UI 클래스 (화면 테스트용 최소 구현) ─────────────────────
+
+import { StateField } from "@codemirror/state";
+
+/** 편집기 상태: 어떤 파일인지 (테스트가 초기값을 바꿀 수 있게 전역에 둔다) */
+export const editorState = { file: null as TFile | null, livePreview: true };
+export const editorInfoField = StateField.define<{ file: TFile | null }>({
+	create: () => ({ file: editorState.file }),
+	update: (v) => v,
+});
+export const editorLivePreviewField = StateField.define<boolean>({
+	create: () => editorState.livePreview,
+	update: (v) => v,
+});
+
 export class Modal {
 	constructor(public app: App) {}
 	open() {}
 	close() {}
 }
+
 export class Component {
-	load() {}
-	unload() {}
-	addChild<T>(c: T): T {
+	private children: Component[] = [];
+	private cleanups: (() => void)[] = [];
+	loaded = false;
+	load() {
+		this.loaded = true;
+	}
+	unload() {
+		for (const c of this.children) c.unload();
+		for (const f of this.cleanups) f();
+		this.cleanups = [];
+		this.loaded = false;
+	}
+	addChild<T extends Component>(c: T): T {
+		this.children.push(c);
+		c.load();
 		return c;
 	}
+	removeChild<T extends Component>(c: T): T {
+		this.children = this.children.filter((x) => x !== c);
+		c.unload();
+		return c;
+	}
+	register(f: () => void) {
+		this.cleanups.push(f);
+	}
+	registerEvent(ref: EventRef & { owner?: Events }) {
+		this.cleanups.push(() => ref.owner?.offref(ref));
+	}
+	registerDomEvent(el: EventTarget, type: string, cb: EventListener) {
+		el.addEventListener(type, cb);
+		this.cleanups.push(() => el.removeEventListener(type, cb));
+	}
 }
-export class Menu {}
+
+export class ItemView extends Component {
+	app: App;
+	containerEl: HTMLElement;
+	contentEl: HTMLElement;
+	constructor(public leaf: WorkspaceLeaf & { app?: App }) {
+		super();
+		this.app = (leaf as unknown as { app: App }).app;
+		this.containerEl = document.createElement("div");
+		this.contentEl = this.containerEl.createDiv({ cls: "view-content" });
+	}
+}
+
+export interface RecordedMenuItem {
+	title: string;
+	icon?: string;
+	checked?: boolean | null;
+	section?: string;
+	click?: () => void;
+}
+export const menus: Menu[] = [];
+export class Menu {
+	items: (RecordedMenuItem | "separator")[] = [];
+	constructor() {
+		menus.push(this);
+	}
+	addItem(cb: (mi: MenuItem) => unknown) {
+		const rec: RecordedMenuItem = { title: "" };
+		cb(new MenuItem(rec));
+		this.items.push(rec);
+		return this;
+	}
+	addSeparator() {
+		this.items.push("separator");
+		return this;
+	}
+	showAtMouseEvent() {}
+	showAtPosition() {}
+	titles(): string[] {
+		return this.items.filter((i): i is RecordedMenuItem => i !== "separator").map((i) => i.title);
+	}
+	click(title: string) {
+		const it = this.items.find((i): i is RecordedMenuItem => i !== "separator" && i.title === title);
+		if (!it) throw new Error("메뉴 항목 없음: " + title + " / " + this.titles().join(", "));
+		it.click?.();
+	}
+}
+export class MenuItem {
+	constructor(private rec: RecordedMenuItem) {}
+	setTitle(t: string) {
+		this.rec.title = t;
+		return this;
+	}
+	setIcon(i: string) {
+		this.rec.icon = i;
+		return this;
+	}
+	setChecked(c: boolean | null) {
+		this.rec.checked = c;
+		return this;
+	}
+	setSection(s: string) {
+		this.rec.section = s;
+		return this;
+	}
+	onClick(cb: () => void) {
+		this.rec.click = cb;
+		return this;
+	}
+}
+
+export const MarkdownRenderer = {
+	async render(_app: App, markdown: string, el: HTMLElement) {
+		for (const para of markdown.split(/\n{2,}/)) {
+			const p = document.createElement("p");
+			p.textContent = para;
+			el.appendChild(p);
+		}
+	},
+};
+
 export class Plugin {}
 export class PluginSettingTab {}
-export class ItemView {}
 export class AbstractInputSuggest {}
 export class Setting {}
-export const MarkdownRenderer = { render: async () => {} };
-export function setIcon() {}
-export function setTooltip() {}
+export function setIcon(el: HTMLElement, icon: string) {
+	el.setAttribute("data-icon", icon);
+}
+export function setTooltip(el: HTMLElement, t: string) {
+	el.setAttribute("aria-label", t);
+}
 export function debounce<T extends (...a: any[]) => unknown>(fn: T) {
 	return fn;
 }

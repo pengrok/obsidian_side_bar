@@ -266,6 +266,17 @@ describe("6.4 하이라이트 제거 (M14)", () => {
 	});
 });
 
+describe("6.4 같은 ID가 두 번 있을 때", () => {
+	it("누른 위치(두 번째)의 하이라이트를 지운다", async () => {
+		const t = await linkedEnv();
+		await t.app.vault.modify(t.f, "==문구==%%mn:abc123%% 사이 ==문구==%%mn:abc123%%");
+		const hls = parseHighlights(t.app.vault.text("n.md"), "n.md");
+		confirm.choice = "keep";
+		await t.actions.removeHighlight({ ...t.linked, highlight: hls[1] });
+		expect(t.app.vault.text("n.md")).toBe("==문구==%%mn:abc123%% 사이 문구");
+	});
+});
+
 describe("6.5 코멘트만 삭제 (M15)", () => {
 	it("파일은 휴지통, 노트에는 ==문구==만", async () => {
 		const t = await linkedEnv();

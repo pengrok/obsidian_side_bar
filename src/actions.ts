@@ -243,7 +243,9 @@ export class Actions {
 				await this.plugin.saveAll();
 			}
 		}
-		if (!(await this.writer.unwrap(f, ann.id))) {
+		// 누른 위치의 하이라이트를 지운다(같은 ID가 두 번 있으면 첫 번째가 아닐 수 있다). 못 찾으면 ID로
+		const removed = (await this.writer.unwrapAt(f, hl)) || (await this.writer.unwrap(f, ann.id));
+		if (!removed) {
 			new Notice("하이라이트 위치를 찾지 못했어요. 노트를 확인해 주세요");
 			return;
 		}

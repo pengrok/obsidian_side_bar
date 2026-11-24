@@ -123,9 +123,11 @@ export class MarginNotesView extends ItemView {
 				if (f && f !== this.currentFile) {
 					this.currentFile = f;
 					if (this.tab === "current") this.refresh();
-				}
+				} else if (!f) this.syncCurrentFile();
 			}),
 		);
+		// 마크다운 탭을 모두 닫으면 "열린 노트 없음" (7.5절)
+		this.registerEvent(this.app.workspace.on("layout-change", () => this.syncCurrentFile()));
 		this.registerEvent(
 			this.app.workspace.on("file-open", (file) => {
 				if (file && file.extension === "md" && file !== this.currentFile) {
@@ -149,6 +151,13 @@ export class MarginNotesView extends ItemView {
 		if (this.editing?.dirty) await this.saveEditing(true);
 		this.autosave.cancel();
 		this.renderComp?.unload();
+	}
+
+	private syncCurrentFile(): void {
+		const f = this.plugin.lastMarkdownFile();
+		if (f === this.currentFile) return;
+		this.currentFile = f;
+		if (this.tab === "current") this.refresh();
 	}
 
 	// ── 구성 ────────────────────────────────────────────
@@ -358,11 +367,12 @@ export class MarginNotesView extends ItemView {
 
 		const ts = this.ts;
 		const query = parseQuery(ts.query);
-		const needBody = queryNeedsBody(query) || ts.statusFilter.some((s) => s !== "orphan");
+		// 현재 노트 탭은 항목이 적고 카드가 어차피 본문을 읽으므로 미리 읽어 개수·배지를 정확히 한다
+		const needBody = this.tab === "current" || queryNeedsBody(query) || ts.statusFilter.some((s) => s !== "orphan");
 		if (needBody) {
 			const unread = items.filter((i) => i.annotation && i.annotation.body === null);
 			if (unread.length) {
-				this.statusEl.setText("검색 중…");
+				if (this.tab === "all") this.statusEl.setText("검색 중…");
 				for (let i = 0; i < unread.length; i += 20) {
 					await Promise.all(unread.slice(i, i + 20).map((it) => this.plugin.index.ensureBody(it.annotation!)));
 				}
@@ -581,7 +591,7 @@ export class MarginNotesView extends ItemView {
 				ed.dirty = ed.textarea.value !== body;
 				const ann = ed.item.annotation;
 				// 내 저장으로 바뀐 mtime은 충돌로 보지 않는다
-				if (ann) window.setTimeout(() => (ed.startMtime = ann.file.stat.mtime), 50);
+				if (ann) ed.startMtime = ann.file.stat.mtime;
 			} else if (!ed.item.annotation) {
 				ed.dirty = false;
 			}
