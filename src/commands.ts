@@ -133,7 +133,6 @@ export function editorMenu(plugin: MarginNotesPlugin, menu: Menu, editor: Editor
 	const f = usable(plugin, ctx);
 	if (!f) return;
 	const a = plugin.actions;
-	const colors = plugin.settings.colors;
 	let hl: Highlight | null = null;
 	if (editor.somethingSelected()) {
 		const check = plugin.writer.validateSelection(editor, f.path);
@@ -142,17 +141,6 @@ export function editorMenu(plugin: MarginNotesPlugin, menu: Menu, editor: Editor
 			menu.addSeparator();
 			menu.addItem((mi) => mi.setTitle("하이라이트 + 코멘트").setIcon("message-square-plus").setSection("margin-notes").onClick(() => void a.addComment(editor, f)));
 			menu.addItem((mi) => mi.setTitle("하이라이트만").setIcon("highlighter").setSection("margin-notes").onClick(() => void a.addHighlight(editor, f)));
-			if (colors.length > 1) {
-				for (const c of colors) {
-					menu.addItem((mi) =>
-						mi
-							.setTitle(`색 골라 하이라이트: ${c.name}`)
-							.setIcon("palette")
-							.setSection("margin-notes-colors")
-							.onClick(() => void a.addHighlight(editor, f, c.key)),
-					);
-				}
-			}
 			return;
 		}
 		hl = check.highlight;
@@ -169,19 +157,6 @@ export function editorMenu(plugin: MarginNotesPlugin, menu: Menu, editor: Editor
 			.setSection("margin-notes")
 			.onClick(() => void a.editCommentFor(f, hl)),
 	);
-	if (colors.length > 1) {
-		const cur = plugin.effectiveColor(item.annotation?.color ?? null);
-		for (const c of colors) {
-			menu.addItem((mi) =>
-				mi
-					.setTitle(`색 바꾸기: ${c.name}`)
-					.setIcon("palette")
-					.setChecked(c.key === cur)
-					.setSection("margin-notes-colors")
-					.onClick(() => void a.changeColorOfHighlight(f, hl, c.key)),
-			);
-		}
-	}
 	if (item.annotation) {
 		menu.addItem((mi) => mi.setTitle("코멘트 파일 열기").setIcon("file-text").setSection("margin-notes").onClick(() => void a.openCommentFile(item)));
 	}

@@ -82,7 +82,7 @@ describe("T8 parseQuery·matches", () => {
 
 	it("color:는 key·이름 모두", () => {
 		expect(matches(item({ ...base }), parseQuery("color:yellow"), colors)).toBe(true);
-		expect(matches(item({ ...base }), parseQuery("color:중요"), colors)).toBe(true);
+		expect(matches(item({ ...base }), parseQuery("color:노랑"), colors)).toBe(true);
 	});
 	it("note:", () => {
 		expect(matches(item({ ...base, note: "폴더/독서노트.md" }), parseQuery("note:독서"), colors)).toBe(true);
@@ -135,8 +135,8 @@ describe("필터·정렬·묶기", () => {
 	it("색으로 묶기", () => {
 		const g = groupItems([a, b], "color", colors, "yellow");
 		expect(g.map((x) => [x.label, x.items.length])).toEqual([
-			["정의·개념", 1],
-			["중요", 1],
+			["파랑", 1],
+			["노랑", 1],
 		]);
 	});
 	it("제목으로 묶기", () => {

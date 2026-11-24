@@ -2,6 +2,7 @@ import { setIcon, type MarkdownPostProcessorContext } from "obsidian";
 import type MarginNotesPlugin from "../main";
 import { parseHighlights } from "../parser/highlightParser";
 import type { Highlight } from "../types";
+import { applyColor } from "../utils/color";
 
 /**
  * 읽기 모드 (5.6절). HTML에는 %% 주석이 빠져 있어 ID를 알 수 없으므로,
@@ -29,8 +30,8 @@ export function buildReadingProcessor(plugin: MarginNotesPlugin) {
 
 		marks.forEach((mark, i) => {
 			const h = hls[i];
-			const key = plugin.effectiveColor(h.id ? plugin.index.colorOf(h.id) : null);
-			mark.addClass("mn-hl", "mn-color-" + key);
+			mark.addClass("mn-hl");
+			applyColor(mark, plugin.effectiveColor(h.id ? plugin.index.colorOf(h.id) : null));
 			if (!h.id) return;
 			mark.setAttr("data-mn-id", h.id);
 			const icon = createSpan({ cls: "mn-icon", attr: { "data-mn-id": h.id, "aria-label": "코멘트 보기" } });

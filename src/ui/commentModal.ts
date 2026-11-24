@@ -1,5 +1,7 @@
 import { App, Modal, Platform } from "obsidian";
 import type { HighlightColor } from "../types";
+import { applyColor, isHexColor } from "../utils/color";
+import { pickColor } from "./colorPicker";
 
 export interface CommentModalOptions {
 	title: string;
@@ -23,7 +25,7 @@ export class CommentModal extends Modal {
 		private opts: CommentModalOptions,
 	) {
 		super(app);
-		this.color = opts.colors.some((c) => c.key === opts.color) ? opts.color : opts.colors[0]?.key ?? opts.color;
+		this.color = isHexColor(opts.color) || opts.colors.some((c) => c.key === opts.color) ? opts.color : opts.colors[0]?.key ?? opts.color;
 	}
 
 	onOpen(): void {
@@ -51,6 +53,26 @@ export class CommentModal extends Modal {
 				this.applyQuoteColor(quote);
 			});
 		}
+		// 팔레트에 없는 색을 직접 고른다
+		const custom = picker.createEl("button", { cls: "mn-color-chip mn-color-chip--custom", attr: { type: "button", "aria-label": "다른 색 고르기" } });
+		const customDot = custom.createSpan({ cls: "mn-color-dot" });
+		const customLabel = custom.createSpan({ text: "다른 색" });
+		const showCustom = () => {
+			if (!isHexColor(this.color)) return;
+			applyColor(custom, this.color);
+			customDot.addClass("is-filled");
+			customLabel.setText(this.color);
+			picker.querySelectorAll(".mn-color-chip").forEach((el) => el.removeClass("is-active"));
+			custom.addClass("is-active");
+		};
+		showCustom();
+		custom.addEventListener("click", () =>
+			pickColor(activeDocument, isHexColor(this.color) ? this.color : "#ffd54f", (hex) => {
+				this.color = hex;
+				showCustom();
+				this.applyQuoteColor(quote);
+			}),
+		);
 
 		this.textarea = contentEl.createEl("textarea", {
 			cls: "mn-modal-input",
@@ -78,8 +100,7 @@ export class CommentModal extends Modal {
 	}
 
 	private applyQuoteColor(el: HTMLElement): void {
-		for (const c of this.opts.colors) el.removeClass("mn-color-" + c.key);
-		el.addClass("mn-color-" + this.color);
+		applyColor(el, this.color);
 	}
 
 	private async submit(): Promise<void> {

@@ -3,6 +3,8 @@ import type MarginNotesPlugin from "../main";
 import type { SidebarItem, TabId } from "../types";
 import { isoDatePart } from "../utils/time";
 import { basename, colorKeyOf } from "./search";
+import { applyColor, isHexColor } from "../utils/color";
+import { pickColor } from "./colorPicker";
 
 export interface CardHost {
 	plugin: MarginNotesPlugin;
@@ -24,7 +26,7 @@ export function renderCard(host: CardHost, parent: HTMLElement, item: SidebarIte
 
 	const card = parent.createDiv({ cls: "mn-card", attr: { "data-key": item.key } });
 	if (ann) card.setAttr("data-mn-id", ann.id);
-	card.addClass("mn-color-" + colorKey);
+	applyColor(card, colorKey);
 	if (item.status === "orphan") card.addClass("mn-card--orphan");
 	if (item.status === "plain") card.addClass("mn-card--plain");
 	const relinking = ann && plugin.relinkingId === ann.id;
@@ -187,6 +189,16 @@ export function showColorMenu(plugin: MarginNotesPlugin, item: SidebarItem, e: M
 				.onClick(() => void plugin.actions.changeColor(item, c.key)),
 		);
 	}
+	menu.addSeparator();
+	menu.addItem((mi) =>
+		mi
+			.setTitle(isHexColor(cur) ? `직접 고른 색 (${cur})…` : "다른 색 고르기…")
+			.setIcon("pipette")
+			.setChecked(isHexColor(cur))
+			.onClick(() =>
+				pickColor(activeDocument, isHexColor(cur) ? cur : "#ffd54f", (hex) => void plugin.actions.changeColor(item, hex)),
+			),
+	);
 	menu.showAtMouseEvent(e);
 }
 

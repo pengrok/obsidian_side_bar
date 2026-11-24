@@ -157,12 +157,12 @@ describe("사이드바 — 현재 노트 탭 (7장, M7·M8)", () => {
 	it("필터 메뉴 → 칩, × 로 해제 (7.1절)", async () => {
 		const t = await makeEnv();
 		(t.root.querySelector('[data-act="filter"]') as HTMLElement).click();
-		menus.at(-1)!.click("정의·개념");
+		menus.at(-1)!.click("파랑");
 		await wait(10);
 		expect(quotes(t.root)).toEqual(["둘째 문장"]);
 		expect(t.root.querySelector('[data-act="filter"]')!.classList.contains("is-active")).toBe(true);
 		const chip = t.root.querySelector(".mn-chip")!;
-		expect(chip.textContent).toContain("정의·개념");
+		expect(chip.textContent).toContain("파랑");
 		(chip.querySelector(".mn-chip-x") as HTMLElement).click();
 		await wait(10);
 		expect(cards(t.root)).toHaveLength(4);

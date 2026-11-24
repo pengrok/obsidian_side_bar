@@ -12,7 +12,9 @@ import { AnnotationStore } from "./store/annotationStore";
 import type { MarginNotesSettings, UiState } from "./types";
 import { MarginNotesView, VIEW_TYPE_MARGIN_NOTES } from "./ui/sidebarView";
 import { SelectionToolbar, type ToolbarContext } from "./ui/selectionToolbar";
+import { pickColor } from "./ui/colorPicker";
 import { debounceFn, throttleFn } from "./utils/debounce";
+import { resolveColor } from "./utils/color";
 
 const HOVER_SOURCE = "margin-notes";
 
@@ -113,12 +115,9 @@ export default class MarginNotesPlugin extends Plugin {
 
 	// ── 색 (7.6절) ──────────────────────────────────────
 
-	/** 지워진 색이면 기본색 */
-	effectiveColor(key: string | null): string {
-		const colors = this.settings.colors;
-		if (key && colors.some((c) => c.key === key)) return key;
-		if (colors.some((c) => c.key === this.settings.defaultColor)) return this.settings.defaultColor;
-		return colors[0]?.key ?? "yellow";
+	/** mn-color 값 → 화면에 쓸 색 (팔레트 key 또는 직접 고른 #hex, 지워진 색이면 기본색) */
+	effectiveColor(value: string | null): string {
+		return resolveColor(value, this.settings.colors, this.settings.defaultColor);
 	}
 
 	/**
@@ -264,6 +263,7 @@ export default class MarginNotesPlugin extends Plugin {
 				defaultColor: () => this.settings.defaultColor,
 				onComment: (editor, file) => void this.actions.addComment(editor, file),
 				onHighlight: (editor, file, key) => void this.actions.addHighlight(editor, file, key),
+				pickColor: (onPick) => pickColor(activeDocument, "#ffd54f", onPick),
 				doc: () => activeDocument,
 			});
 		}

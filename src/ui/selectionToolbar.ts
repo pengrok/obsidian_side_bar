@@ -25,6 +25,8 @@ export interface ToolbarDeps {
 	defaultColor: () => string;
 	onComment: (editor: Editor, file: TFile) => void;
 	onHighlight: (editor: Editor, file: TFile, colorKey?: string) => void;
+	/** 시스템 색상 선택기를 열고 고른 #hex를 넘긴다 */
+	pickColor: (onPick: (hex: string) => void) => void;
 	doc: () => Document;
 }
 
@@ -121,8 +123,8 @@ export class SelectionToolbar {
 		btn("highlighter", "하이라이트", () => this.fire((c) => this.deps.onHighlight(c.editor, c.file)), "mn-tb-highlight");
 
 		const colors = this.deps.colors();
+		el.createDiv({ cls: "mn-tb-sep" });
 		if (colors.length > 1) {
-			el.createDiv({ cls: "mn-tb-sep" });
 			for (const c of colors) {
 				const dot = el.createEl("button", {
 					cls: `mn-tb-color mn-color-${c.key}`,
@@ -136,6 +138,19 @@ export class SelectionToolbar {
 				});
 			}
 		}
+		// 팔레트에 없는 색을 직접 고른다
+		const pick = el.createEl("button", { cls: "clickable-icon mn-tb-pick", attr: { "aria-label": "다른 색 고르기", type: "button" } });
+		setIcon(pick, "pipette");
+		setTooltip(pick, "다른 색 고르기");
+		pick.addEventListener("click", (e) => {
+			e.preventDefault();
+			const ctx = this.ctx;
+			if (!ctx) return;
+			this.deps.pickColor((hex) => {
+				this.hide();
+				this.deps.onHighlight(ctx.editor, ctx.file, hex);
+			});
+		});
 		return el;
 	}
 

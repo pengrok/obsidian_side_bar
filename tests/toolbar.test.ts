@@ -23,6 +23,7 @@ function make(text: string, from: number, to: number, over: Partial<ToolbarDeps>
 		defaultColor: () => "yellow",
 		onComment,
 		onHighlight,
+		pickColor: () => {},
 		doc: () => document,
 		...over,
 	});

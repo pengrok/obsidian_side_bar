@@ -1,6 +1,7 @@
 /** 검색어 파싱·필터·묶기·정렬 (7.3절, 7.4절). 모두 순수 함수 */
 import type { FilterStatus, GroupBy, HighlightColor, SidebarItem, SortBy, TabId } from "../types";
 import { isoDatePart, isoToTime } from "../utils/time";
+import { colorLabel, resolveColor } from "../utils/color";
 
 export interface Query {
 	words: string[];
@@ -99,11 +100,9 @@ export function filterStatusOf(item: SidebarItem): FilterStatus {
 	return "plain";
 }
 
-/** 표시할 색 key. 지워진 색이면 기본색 */
+/** 표시할 색: 팔레트 key 또는 직접 고른 #hex. 지워진 색이면 기본색 */
 export function colorKeyOf(item: SidebarItem, colors: HighlightColor[], defaultColor: string): string {
-	const k = item.annotation?.color;
-	if (k && colors.some((c) => c.key === k)) return k;
-	return colors.some((c) => c.key === defaultColor) ? defaultColor : colors[0]?.key ?? "yellow";
+	return resolveColor(item.annotation?.color, colors, defaultColor);
 }
 
 function colorMatches(want: string, key: string, colors: HighlightColor[]): boolean {
@@ -222,7 +221,7 @@ export function groupItems(
 		switch (groupBy) {
 			case "color": {
 				key = colorKeyOf(it, colors, defaultColor);
-				label = colors.find((c) => c.key === key)?.name ?? key;
+				label = colorLabel(key, colors);
 				break;
 			}
 			case "heading":

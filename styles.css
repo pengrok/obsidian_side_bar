@@ -628,3 +628,20 @@ body {
 		animation: none;
 	}
 }
+
+/* 직접 고른 색 */
+.mn-tb-pick svg {
+	width: 14px;
+	height: 14px;
+}
+.mn-color-chip--custom .mn-color-dot:not(.is-filled) {
+	background: conic-gradient(#e57373, #ffd54f, #81c784, #64b5f6, #ba68c8, #e57373);
+}
+.mn-color-input {
+	position: fixed;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}

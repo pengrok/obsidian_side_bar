@@ -56,7 +56,7 @@ export function buildCommentFile(p: NewCommentProps, body: string): string {
 		`${PROP.source}: ${yamlString(p.sourceLink)}`,
 		`${PROP.sourcePath}: ${yamlString(p.sourcePath)}`,
 		`${PROP.quote}: ${yamlString(p.quote)}`,
-		`${PROP.color}: ${p.color}`,
+		`${PROP.color}: ${/^[a-z0-9_-]+$/i.test(p.color) ? p.color : yamlString(p.color)}`,
 		`${PROP.created}: ${p.created}`,
 		`${PROP.updated}: ${p.created}`,
 		`${PROP.tags}:${tags}`,
