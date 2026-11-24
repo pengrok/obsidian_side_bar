@@ -143,20 +143,18 @@ export class MarginNotesSettingTab extends PluginSettingTab {
 			.addTextArea((t) => {
 				t.setValue(s.excludeFolders.join("\n"));
 				t.inputEl.rows = 3;
-				t.inputEl.addEventListener("change", async () => {
+				t.inputEl.addEventListener("change", () => {
 					s.excludeFolders = t.inputEl.value
 						.split("\n")
 						.map((x) => normalizeFolder(x))
 						.filter(Boolean);
-					await this.plugin.saveAll();
-					this.plugin.refreshView(true);
+					void this.plugin.saveAll().then(() => this.plugin.refreshView(true));
 				});
 			});
 		new Setting(containerEl).setName("미리보기 줄 수").setDesc("카드에 보이는 코멘트 줄 수").addSlider((sl) =>
 			sl
 				.setLimits(1, 10, 1)
 				.setValue(s.previewLines)
-				.setDynamicTooltip()
 				.onChange(async (v) => {
 					s.previewLines = v;
 					await this.plugin.saveAll();

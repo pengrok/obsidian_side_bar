@@ -59,10 +59,10 @@ describe("T7 buildPath", () => {
 		expect(withSuffix("A/b.md", 2)).toBe("A/b (2).md");
 	});
 	it("validateCommentFolder", () => {
-		expect(validateCommentFolder("")).not.toBeNull();
-		expect(validateCommentFolder("/")).not.toBeNull();
-		expect(validateCommentFolder(".obsidian/x")).not.toBeNull();
-		expect(validateCommentFolder("Annotations")).toBeNull();
+		expect(validateCommentFolder("", ".obsidian")).not.toBeNull();
+		expect(validateCommentFolder("/", ".obsidian")).not.toBeNull();
+		expect(validateCommentFolder(".obsidian/x", ".obsidian")).not.toBeNull();
+		expect(validateCommentFolder("Annotations", ".obsidian")).toBeNull();
 	});
 });
 

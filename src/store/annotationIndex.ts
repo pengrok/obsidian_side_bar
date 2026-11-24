@@ -27,7 +27,7 @@ interface HlCache {
 	items: Highlight[];
 }
 
-const yieldToUi = () => new Promise<void>((r) => setTimeout(r, 0));
+const yieldToUi = () => new Promise<void>((r) => window.setTimeout(r, 0));
 
 /**
  * 메모리 인덱스 (5.5절). "앵커 ID → 코멘트 파일"과 노트별 하이라이트 캐시를 들고 있다.
@@ -43,7 +43,7 @@ export class AnnotationIndex extends Events {
 	private fileDebounce = new KeyedDebouncer(300);
 	private quoteDebounce = new KeyedDebouncer(1500);
 	private pending = new Set<string>();
-	private flushTimer: ReturnType<typeof setTimeout> | null = null;
+	private flushTimer: number | null = null;
 	ready = false;
 
 	constructor(private deps: IndexDeps) {
@@ -113,7 +113,7 @@ export class AnnotationIndex extends Events {
 
 	/** 코멘트 파일 frontmatter → Annotation. 형식이 틀리면 null (E7) */
 	readAnnotation(file: TFile): Annotation | null {
-		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter as Record<string, unknown> | undefined;
+		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
 		const id = idFromProp(fm?.[PROP.id]);
 		if (!fm || !id) {
 			if (fm && !this.warned.has(file.path)) {
@@ -484,7 +484,7 @@ export class AnnotationIndex extends Events {
 	emitChanged(paths: Iterable<string>): void {
 		for (const p of paths) this.pending.add(p);
 		if (this.flushTimer !== null) return;
-		this.flushTimer = setTimeout(() => {
+		this.flushTimer = window.setTimeout(() => {
 			this.flushTimer = null;
 			const set = new Set(this.pending);
 			this.pending.clear();
@@ -495,6 +495,6 @@ export class AnnotationIndex extends Events {
 	destroy(): void {
 		this.fileDebounce.clear();
 		this.quoteDebounce.clear();
-		if (this.flushTimer !== null) clearTimeout(this.flushTimer);
+		if (this.flushTimer !== null) window.clearTimeout(this.flushTimer);
 	}
 }

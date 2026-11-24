@@ -8,6 +8,48 @@ body {
 	--mn-hl-opacity: 0.35;
 }
 
+/* 색 key → --mn-hl-color. 변수 값(--mn-color-<key>)은 플러그인이 body에 둔다.
+   key는 기본 5색과 사용자가 추가한 c1~c8뿐이다(색은 최대 8개). */
+.mn-color-yellow {
+	--mn-hl-color: var(--mn-color-yellow, #ffd54f);
+}
+.mn-color-green {
+	--mn-hl-color: var(--mn-color-green, #81c784);
+}
+.mn-color-blue {
+	--mn-hl-color: var(--mn-color-blue, #64b5f6);
+}
+.mn-color-red {
+	--mn-hl-color: var(--mn-color-red, #e57373);
+}
+.mn-color-purple {
+	--mn-hl-color: var(--mn-color-purple, #ba68c8);
+}
+.mn-color-c1 {
+	--mn-hl-color: var(--mn-color-c1, #90a4ae);
+}
+.mn-color-c2 {
+	--mn-hl-color: var(--mn-color-c2, #90a4ae);
+}
+.mn-color-c3 {
+	--mn-hl-color: var(--mn-color-c3, #90a4ae);
+}
+.mn-color-c4 {
+	--mn-hl-color: var(--mn-color-c4, #90a4ae);
+}
+.mn-color-c5 {
+	--mn-hl-color: var(--mn-color-c5, #90a4ae);
+}
+.mn-color-c6 {
+	--mn-hl-color: var(--mn-color-c6, #90a4ae);
+}
+.mn-color-c7 {
+	--mn-hl-color: var(--mn-color-c7, #90a4ae);
+}
+.mn-color-c8 {
+	--mn-hl-color: var(--mn-color-c8, #90a4ae);
+}
+
 /* ── 본문 하이라이트 ───────────────────────────── */
 
 .mn-hl {

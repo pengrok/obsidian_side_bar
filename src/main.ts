@@ -30,7 +30,7 @@ export default class MarginNotesPlugin extends Plugin {
 	relinkingId: string | null = null;
 
 	private lastMdLeaf: WorkspaceLeaf | null = null;
-	private styleEl: HTMLStyleElement | null = null;
+	private colorVars: string[] = [];
 	private scrollHooked = new WeakSet<HTMLElement>();
 	readonly saveUiSoon = debounceFn(() => void this.saveAll(), 500);
 
@@ -67,7 +67,14 @@ export default class MarginNotesPlugin extends Plugin {
 				}
 			}),
 		);
-		this.registerDomEvent(document, "mouseover", (e) => this.onHover(e));
+		this.registerDomEvent(activeDocument, "mouseover", (e) => this.onHover(e));
+		// 팝아웃 창에도 색 변수·마우스 올림 처리를 건다
+		this.registerEvent(
+			this.app.workspace.on("window-open", (_win, win) => {
+				this.applyColorVars(win.document.body);
+				this.registerDomEvent(win.document, "mouseover", (e) => this.onHover(e));
+			}),
+		);
 
 		this.app.workspace.onLayoutReady(async () => {
 			const active = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -92,7 +99,7 @@ export default class MarginNotesPlugin extends Plugin {
 	onunload(): void {
 		this.index?.destroy();
 		this.saveUiSoon.cancel();
-		this.styleEl?.remove();
+		this.clearColorVars(activeDocument.body);
 	}
 
 	async saveAll(): Promise<void> {
@@ -109,15 +116,29 @@ export default class MarginNotesPlugin extends Plugin {
 		return colors[0]?.key ?? "yellow";
 	}
 
+	/**
+	 * 색마다 --mn-color-<key> 변수를 body에 둔다 (7.6절).
+	 * .mn-color-<key> → --mn-hl-color 연결 규칙은 styles.css에 있다(기본 5색 + c1~c8).
+	 */
 	applyColorStyles(): void {
-		if (!this.styleEl) {
-			this.styleEl = document.head.createEl("style", { attr: { id: "mn-colors" } });
+		this.applyColorVars(activeDocument.body);
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			const body = leaf.view.containerEl.ownerDocument.body;
+			if (body !== activeDocument.body) this.applyColorVars(body);
 		}
-		const safeKey = (k: string) => k.replace(/[^a-z0-9_-]/gi, "");
+	}
+
+	private applyColorVars(body: HTMLElement): void {
+		this.clearColorVars(body);
 		const safeColor = (c: string) => (/^#[0-9a-f]{3,8}$/i.test(c) ? c : "#ffd54f");
-		const vars = this.settings.colors.map((c) => `--mn-color-${safeKey(c.key)}: ${safeColor(c.color)};`).join(" ");
-		const rules = this.settings.colors.map((c) => `.mn-color-${safeKey(c.key)} { --mn-hl-color: var(--mn-color-${safeKey(c.key)}); }`).join("\n");
-		this.styleEl.textContent = `body { ${vars} }\n${rules}`;
+		const props: Record<string, string> = {};
+		for (const c of this.settings.colors) props[`--mn-color-${c.key.replace(/[^a-z0-9_-]/gi, "")}`] = safeColor(c.color);
+		body.setCssProps(props);
+		this.colorVars = Object.keys(props);
+	}
+
+	private clearColorVars(body: HTMLElement): void {
+		for (const v of this.colorVars) body.style.removeProperty(v);
 	}
 
 	onColorsChanged(): void {

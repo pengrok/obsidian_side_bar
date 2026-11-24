@@ -288,7 +288,7 @@ export class MarginNotesView extends ItemView {
 	private syncControls(): void {
 		const ts = this.ts;
 		this.searchWrap.toggleClass("is-hidden", !ts.searchVisible);
-		if (document.activeElement !== this.searchInput) this.searchInput.value = ts.query;
+		if (activeDocument.activeElement !== this.searchInput) this.searchInput.value = ts.query;
 		const active = (act: string, on: boolean) => this.toolbarEl.querySelector(`[data-act="${act}"]`)?.toggleClass("is-active", on);
 		active("filter", ts.colorFilter.length > 0 || ts.statusFilter.length > 0);
 		active("layers", ts.groupBy !== (this.tab === "all" ? "note" : "none"));
@@ -554,7 +554,7 @@ export class MarginNotesView extends ItemView {
 			});
 			ta.addEventListener("blur", () => {
 				window.setTimeout(() => {
-					if (this.editing?.textarea === ta && document.activeElement !== ta) void this.finishEditing(true);
+					if (this.editing?.textarea === ta && activeDocument.activeElement !== ta) void this.finishEditing(true);
 				}, 150);
 			});
 			ta.focus();

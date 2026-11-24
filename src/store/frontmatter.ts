@@ -81,5 +81,7 @@ export function normalizeTags(v: unknown): string[] {
 export function propString(v: unknown): string {
 	if (v === null || v === undefined) return "";
 	if (v instanceof Date) return v.toISOString();
-	return String(v);
+	if (typeof v === "string") return v;
+	if (typeof v === "number" || typeof v === "boolean") return String(v);
+	return "";
 }

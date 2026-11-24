@@ -32,7 +32,7 @@ export function emptyQuery(): Query {
 }
 
 export function isEmptyQuery(q: Query): boolean {
-	return Object.values(q).every((a) => a.length === 0);
+	return (Object.values(q) as unknown[][]).every((a) => a.length === 0);
 }
 
 /** 본문을 읽어야 판단할 수 있는 조건이 있는지 (단어·구절·제외·상태 commented/plain) */

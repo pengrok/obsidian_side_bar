@@ -106,7 +106,7 @@ export function withSuffix(path: string, n: number): string {
 }
 
 /** 코멘트 폴더 설정값 검증. 문제가 있으면 안내 문구 */
-export function validateCommentFolder(p: string, configDir = ".obsidian"): string | null {
+export function validateCommentFolder(p: string, configDir: string): string | null {
 	const n = normalizeFolder(p);
 	if (!n) return "코멘트 폴더를 입력하세요. 보관함 루트는 쓸 수 없어요.";
 	if (n === configDir || n.startsWith(configDir + "/")) return `${configDir} 폴더 안에는 둘 수 없어요.`;

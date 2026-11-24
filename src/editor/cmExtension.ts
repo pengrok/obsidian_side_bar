@@ -22,10 +22,7 @@ class CommentIconWidget extends WidgetType {
 		return other.id === this.id;
 	}
 	toDOM(): HTMLElement {
-		const span = document.createElement("span");
-		span.className = "mn-icon";
-		span.setAttribute("data-mn-id", this.id);
-		span.setAttribute("aria-label", "코멘트 보기");
+		const span = createSpan({ cls: "mn-icon", attr: { "data-mn-id": this.id, "aria-label": "코멘트 보기" } });
 		setIcon(span, "message-square");
 		span.addEventListener("mousedown", (e) => {
 			e.preventDefault();
