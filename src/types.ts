@@ -50,6 +50,8 @@ export interface SidebarItem {
 	sourceMissing?: boolean;
 	/** 고아인데 노트에 `%%mn:id%%`만 남아 있음 (E2) */
 	strayAnchor?: boolean;
+	/** duplicate일 때 연결된 쪽의 코멘트 (새 ID로 분리할 때 복사 원본) */
+	duplicateOf?: Annotation;
 	/** 노트 경로 (원문이 없는 고아도 sourcePath로 채움) */
 	notePath: string;
 }

@@ -51,7 +51,8 @@ export function buildCommentFile(p: NewCommentProps, body: string): string {
 	const tags = p.tags && p.tags.length ? "\n" + p.tags.map((t) => `  - ${yamlString(t)}`).join("\n") : " []";
 	const head = [
 		"---",
-		`${PROP.id}: ${p.id}`,
+		// 숫자로 읽힐 수 있는 ID(사용자가 고른 기존 ID 등)는 따옴표로 감싼다
+		`${PROP.id}: ${/^[a-z]/.test(p.id) ? p.id : yamlString(p.id)}`,
 		`${PROP.source}: ${yamlString(p.sourceLink)}`,
 		`${PROP.sourcePath}: ${yamlString(p.sourcePath)}`,
 		`${PROP.quote}: ${yamlString(p.quote)}`,

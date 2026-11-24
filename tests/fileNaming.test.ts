@@ -65,3 +65,42 @@ describe("T7 buildPath", () => {
 		expect(validateCommentFolder("Annotations")).toBeNull();
 	});
 });
+
+import { generateId, idFromProp, isValidId } from "../src/utils/id";
+import { buildCommentFile } from "../src/store/frontmatter";
+import { parseYaml } from "obsidian";
+
+describe("앵커 ID (3.1절, E17)", () => {
+	it("형식은 [a-z0-9]{6}, 첫 글자는 영문자", () => {
+		for (let i = 0; i < 2000; i++) {
+			const id = generateId();
+			expect(isValidId(id)).toBe(true);
+			expect(id[0]).toMatch(/[a-z]/);
+		}
+	});
+	it("이미 있으면 다시 만든다", () => {
+		const seen = new Set<string>();
+		let calls = 0;
+		const id = generateId((x) => {
+			calls++;
+			if (calls < 3) {
+				seen.add(x);
+				return true;
+			}
+			return false;
+		});
+		expect(calls).toBe(3);
+		expect(seen.has(id)).toBe(false);
+	});
+	it("YAML이 숫자로 읽은 mn-id도 받아 준다", () => {
+		expect(idFromProp(123)).toBe("000123");
+		expect(idFromProp("a1b2c3")).toBe("a1b2c3");
+		expect(idFromProp("ABCDEF")).toBeNull();
+		expect(idFromProp(Infinity)).toBeNull();
+	});
+	it("숫자로 시작하는 ID는 따옴표로 써서 문자열로 남긴다", () => {
+		const text = buildCommentFile({ id: "123456", sourceLink: "[[a]]", sourcePath: "a.md", quote: "q", color: "yellow", created: "x" }, "");
+		const fm = parseYaml(text.split("---\n")[1]);
+		expect(fm["mn-id"]).toBe("123456");
+	});
+});
