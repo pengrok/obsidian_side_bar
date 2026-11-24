@@ -1,0 +1,10 @@
+{
+  "id": "margin-notes",
+  "name": "Margin Notes",
+  "version": "0.1.0",
+  "minAppVersion": "1.6.6",
+  "description": "Highlight text and keep each comment as its own note in a folder you choose, with a sidebar to review them.",
+  "author": "pengrok",
+  "authorUrl": "https://github.com/pengrok",
+  "isDesktopOnly": false
+}

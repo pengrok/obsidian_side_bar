@@ -1,0 +1,32 @@
+{
+  "name": "margin-notes",
+  "version": "0.1.0",
+  "description": "Highlight text and keep each comment as its own note in a folder you choose, with a sidebar to review them.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "test": "vitest run",
+    "lint": "eslint src"
+  },
+  "keywords": [
+    "obsidian",
+    "highlight",
+    "comment",
+    "annotation"
+  ],
+  "author": "pengrok",
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.13",
+    "@types/node": "^22.20.5",
+    "builtin-modules": "^5.5.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "obsidian": "^1.14.4",
+    "typescript": "5.9",
+    "vitest": "^5.1.1"
+  }
+}
