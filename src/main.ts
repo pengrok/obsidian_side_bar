@@ -13,6 +13,7 @@ import type { MarginNotesSettings, UiState } from "./types";
 import { MarginNotesView, VIEW_TYPE_MARGIN_NOTES } from "./ui/sidebarView";
 import { SelectionToolbar, type ToolbarContext } from "./ui/selectionToolbar";
 import { pickColor } from "./ui/colorPicker";
+import { applyHighlightVisibility } from "./utils/visibility";
 import { debounceFn, throttleFn } from "./utils/debounce";
 import { resolveColor } from "./utils/color";
 
@@ -35,6 +36,8 @@ export default class MarginNotesPlugin extends Plugin {
 	private lastMdLeaf: WorkspaceLeaf | null = null;
 	private colorVars: string[] = [];
 	private toolbar: SelectionToolbar | null = null;
+	/** 본문 하이라이트 숨기기 모드. 저장하지 않으므로 다시 켜면 보이는 상태로 시작한다 */
+	highlightsHidden = false;
 	private scrollHooked = new WeakSet<HTMLElement>();
 	readonly saveUiSoon = debounceFn(() => void this.saveAll(), 500);
 
@@ -79,6 +82,7 @@ export default class MarginNotesPlugin extends Plugin {
 				this.applyColorVars(win.document.body);
 				this.registerDomEvent(win.document, "mouseover", (e) => this.onHover(e));
 				this.setupSelectionToolbar(win.document);
+				applyHighlightVisibility(win.document.body, this.highlightsHidden);
 			}),
 		);
 
@@ -105,6 +109,7 @@ export default class MarginNotesPlugin extends Plugin {
 	onunload(): void {
 		this.index?.destroy();
 		this.toolbar?.destroy();
+		this.setHighlightsHidden(false);
 		this.saveUiSoon.cancel();
 		this.clearColorVars(activeDocument.body);
 	}
@@ -249,6 +254,15 @@ export default class MarginNotesPlugin extends Plugin {
 		await this.index.build();
 		this.refreshView(true);
 		this.refreshEditors(true);
+	}
+
+	// ── 본문 하이라이트 보기/숨기기 ──────────────────────
+
+	setHighlightsHidden(hidden: boolean): void {
+		this.highlightsHidden = hidden;
+		const bodies = new Set<HTMLElement>([activeDocument.body]);
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) bodies.add(leaf.view.containerEl.ownerDocument.body);
+		for (const b of bodies) applyHighlightVisibility(b, hidden);
 	}
 
 	// ── 선택하면 뜨는 버튼 줄 ────────────────────────────

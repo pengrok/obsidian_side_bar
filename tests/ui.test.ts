@@ -10,6 +10,7 @@ import { mergeData } from "../src/settingsDefaults";
 import { MarginNotesView } from "../src/ui/sidebarView";
 import { buildCmExtension, refreshEditorView } from "../src/editor/cmExtension";
 import { buildReadingProcessor } from "../src/editor/readingProcessor";
+import { applyHighlightVisibility, HIDE_CLASS } from "../src/utils/visibility";
 
 vi.mock("../src/ui/confirmModal", () => ({ confirmDialog: async () => ({ choice: "trash", checked: false }) }));
 
@@ -54,6 +55,11 @@ async function makeEnv() {
 		refreshEditors: () => {},
 		refreshView: () => {},
 		mainLeaf: () => e.app.workspace.getLeaf(),
+		highlightsHidden: false,
+		setHighlightsHidden(v: boolean) {
+			plugin.highlightsHidden = v;
+			applyHighlightVisibility(document.body, v);
+		},
 		effectiveColor: (k: string | null) => (k && e.settings.colors.some((c) => c.key === k) ? k : e.settings.defaultColor),
 	};
 	plugin.actions = new Actions(plugin as never);
@@ -244,6 +250,27 @@ describe("사이드바 — 현재 노트 탭 (7장, M7·M8)", () => {
 		const relink = t.root.querySelector(".mn-card--relinking");
 		expect(relink).not.toBeNull();
 		expect(relink!.querySelector(".mn-card-relink button")!.textContent).toBe("여기에 연결");
+	});
+});
+
+describe("본문 하이라이트 숨기기 버튼", () => {
+	it("누르면 숨기기 모드, 다시 누르면 보이기 모드", async () => {
+		const t = await makeEnv();
+		const eye = t.root.querySelector<HTMLElement>(".mn-toolbar-eye")!;
+		expect(eye.getAttribute("data-icon")).toBe("eye");
+		expect(document.body.classList.contains(HIDE_CLASS)).toBe(false);
+		eye.click();
+		expect(document.body.classList.contains(HIDE_CLASS)).toBe(true);
+		expect(eye.getAttribute("data-icon")).toBe("eye-off");
+		expect(eye.getAttribute("aria-label")).toBe("본문 하이라이트 보이기");
+		expect(eye.classList.contains("is-active")).toBe(true);
+		// 노트 내용은 그대로
+		expect(t.app.vault.text(NOTE)).toBe(TEXT);
+		// 사이드바 카드는 그대로
+		expect(cards(t.root)).toHaveLength(4);
+		eye.click();
+		expect(document.body.classList.contains(HIDE_CLASS)).toBe(false);
+		expect(eye.getAttribute("data-icon")).toBe("eye");
 	});
 });
 

@@ -200,6 +200,12 @@ export class MarginNotesView extends ItemView {
 		btn("layers", "묶기", (e) => this.groupMenu(e));
 		btn("arrow-up-down", "정렬", (e) => this.sortMenu(e));
 		btn("chevrons-down-up", "모두 접기/펼치기", () => this.toggleCollapseAll());
+		const eye = btn("eye", "본문 하이라이트 숨기기", () => {
+			this.plugin.setHighlightsHidden(!this.plugin.highlightsHidden);
+			this.syncEye(eye);
+		});
+		eye.addClass("mn-toolbar-eye");
+		this.syncEye(eye);
 		btn("refresh-cw", "새로고침", () => void this.plugin.rebuildIndex());
 	}
 
@@ -292,6 +298,17 @@ export class MarginNotesView extends ItemView {
 		this.ts.query = q;
 		if (this.searchInput.value !== q) this.searchInput.value = q;
 		this.changed();
+	}
+
+	/** 숨김 모드면 eye-off 아이콘 + 강조 */
+	private syncEye(b: HTMLElement): void {
+		const hidden = this.plugin.highlightsHidden;
+		b.empty();
+		setIcon(b, hidden ? "eye-off" : "eye");
+		const label = hidden ? "본문 하이라이트 보이기" : "본문 하이라이트 숨기기";
+		b.setAttr("aria-label", label);
+		setTooltip(b, label);
+		b.toggleClass("is-active", hidden);
 	}
 
 	private syncControls(): void {

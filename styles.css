@@ -645,3 +645,15 @@ body {
 	opacity: 0;
 	pointer-events: none;
 }
+
+/* ── 본문 하이라이트 숨기기 모드 (사이드바 눈 버튼) ─────
+   노트 내용은 그대로, 화면에서 하이라이트 배경만 없앤다 */
+body.mn-hide-highlights .markdown-source-view.mod-cm6 .cm-highlight,
+body.mn-hide-highlights .markdown-source-view.mod-cm6 .cm-highlight:has(.mn-hl),
+body.mn-hide-highlights .markdown-source-view.mod-cm6 .mn-hl,
+body.mn-hide-highlights .markdown-source-view.mod-cm6 .mn-hl .cm-highlight,
+body.mn-hide-highlights .markdown-rendered mark,
+body.mn-hide-highlights .markdown-rendered mark.mn-hl {
+	background-color: transparent !important;
+	color: inherit;
+}
