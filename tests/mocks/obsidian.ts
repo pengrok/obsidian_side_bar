@@ -485,6 +485,23 @@ export class Modal {
 	close() {}
 }
 
+/** 열린 고르기 창 (테스트가 항목을 골라 본다) */
+export const openedSuggests: FuzzySuggestModal<unknown>[] = [];
+export abstract class FuzzySuggestModal<T> {
+	placeholder = "";
+	constructor(public app: App) {}
+	setPlaceholder(p: string) {
+		this.placeholder = p;
+	}
+	abstract getItems(): T[];
+	abstract getItemText(item: T): string;
+	abstract onChooseItem(item: T, evt?: MouseEvent | KeyboardEvent): void;
+	open() {
+		openedSuggests.push(this as FuzzySuggestModal<unknown>);
+	}
+	close() {}
+}
+
 export class Component {
 	private children: Component[] = [];
 	private cleanups: (() => void)[] = [];

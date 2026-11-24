@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeAll, describe, expect, it } from "vitest";
-import type { TFile } from "obsidian";
+import { openedSuggests, type TFile } from "obsidian";
 import { installDomHelpers } from "./dom";
 import { setup, wait } from "./helpers";
 import { fileName, isoWeek, periodLabel, shift, startOf } from "../src/goals/periods";
@@ -187,8 +187,10 @@ async function viewEnv() {
 	const plugin = {
 		app: t.app,
 		goals: t.goals,
+		settings: t.settings,
 		uiState,
 		saveUiSoon: () => {},
+		saveAll: async () => {},
 		actions: { openFile: async (f: TFile) => (opened.push(f.path), { view: null }) },
 	};
 	const view = new GoalsView({ app: t.app } as never, plugin as never, () => D(2026, 11, 24));
@@ -262,6 +264,34 @@ describe("목표 사이드바 화면", () => {
 		(t.root.querySelector(".mn-goal-text") as HTMLElement).click();
 		await wait(10);
 		expect(t.opened).toEqual(["Goals/일/2026-11-24.md"]);
+	});
+
+	it("사이드바에서 탭별 노트 폴더를 바로 고른다", async () => {
+		const t = await viewEnv();
+		await t.app.vault.createFolder("내 할일");
+		await t.app.vault.createFolder("내 할일/매일");
+		t.app.vault.seed("내 할일/매일/2026-11-24.md", "- [ ] 고른 폴더의 할 일\n");
+		const folder = t.root.querySelector<HTMLElement>(".mn-goal-folder")!;
+		expect(folder.textContent).toBe("Goals/일");
+		openedSuggests.length = 0;
+		folder.click();
+		const modal = openedSuggests.at(-1)!;
+		const items = modal.getItems().map((f) => modal.getItemText(f));
+		expect(items).toContain("내 할일/매일");
+		expect(items).not.toContain(".obsidian");
+		modal.onChooseItem(modal.getItems().find((f) => modal.getItemText(f) === "내 할일/매일")!);
+		await wait(30);
+		expect(t.settings.goalFolders.day).toBe("내 할일/매일");
+		expect(t.settings.goalFolders.week).toBe("Goals/주"); // 다른 탭은 그대로
+		expect(t.root.querySelector(".mn-goal-folder")!.textContent).toBe("내 할일/매일");
+		expect(texts(t.root, ".mn-goal-text")).toEqual(["고른 폴더의 할 일"]);
+		// 할 일을 추가하면 고른 폴더의 노트에 들어간다
+		const input = t.root.querySelector<HTMLInputElement>(".mn-goal-add input")!;
+		input.value = "추가";
+		input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+		await wait(300);
+		expect(t.app.vault.text("내 할일/매일/2026-11-24.md")).toBe("- [ ] 고른 폴더의 할 일\n- [ ] 추가\n");
+		expect(t.app.vault.getAbstractFileByPath("Goals")).toBeNull();
 	});
 
 	it("통계 탭: 4가지 (지금 기간·이번 달 합계·30일·12주·월별 그래프)", async () => {

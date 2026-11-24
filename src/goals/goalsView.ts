@@ -5,6 +5,7 @@ import { debounceFn } from "../utils/debounce";
 import type { ChartPoint, GoalStats } from "./goalsStore";
 import { periodLabel, PERIOD_LABEL, PERIODS, samePeriod, shift, shortLabel, type Period } from "./periods";
 import type { Task } from "./tasks";
+import { FolderPickModal } from "./folderPicker";
 
 export const VIEW_TYPE_GOALS = "margin-notes-goals";
 
@@ -152,6 +153,20 @@ export class GoalsView extends ItemView {
 		setIcon(next, "chevron-right");
 		next.addEventListener("click", () => this.move(p, 1));
 
+		// 이 탭의 노트 폴더. 누르면 보관함 폴더 목록에서 골라 바로 바꾼다
+		const folder = root.createDiv({ cls: "mn-goal-folder", attr: { role: "button", tabindex: "0" } });
+		setIcon(folder.createSpan({ cls: "mn-goal-folder-icon" }), "folder");
+		folder.createSpan({ cls: "mn-goal-folder-path", text: this.plugin.goals.folderOf(p) || "(폴더 없음)" });
+		setTooltip(folder, `${PERIOD_LABEL[p]} 노트 폴더 바꾸기`);
+		const pick = () => this.pickFolder(p);
+		folder.addEventListener("click", pick);
+		folder.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") {
+				e.preventDefault();
+				pick();
+			}
+		});
+
 		if (!file) {
 			const empty = root.createDiv({ cls: "mn-empty" });
 			empty.createDiv({ text: "이 기간의 노트가 없어요." });
@@ -225,6 +240,13 @@ export class GoalsView extends ItemView {
 			if ((e.target as HTMLElement).closest("a")) return;
 			void this.openAt(file, t.line, e.ctrlKey || e.metaKey);
 		});
+	}
+
+	private pickFolder(p: Period): void {
+		new FolderPickModal(this.app, `${PERIOD_LABEL[p]} 노트 폴더`, (f) => {
+			this.plugin.settings.goalFolders[p] = f.path;
+			void this.plugin.saveAll().then(() => this.render());
+		}).open();
 	}
 
 	private move(p: Period, n: number): void {
